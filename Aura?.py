@@ -93,3 +93,22 @@ if uploaded_file is not None:
             if label[0].isdigit() and label[1] == " ":
                 label = label[2:].strip()
             st.write(f"{label:.<30} {prob:.3%}")
+
+import h5py
+
+def fix_teachable_h5(path="keras_Model.h5"):
+    with h5py.File(path, "r+") as f:
+        config = f.attrs.get("model_config")
+        if config is None:
+            return
+        # Entferne problematische "groups": 1, Einträge
+        config = config.replace('"groups": 1,', '')
+        config = config.replace(', "groups": 1', '')   # je nach Position
+        config = config.replace('"groups": 1', '')
+        f.attrs["model_config"] = config
+
+# Vor load_model aufrufen
+fix_teachable_h5("keras_Model.h5")
+
+# Dann normal laden
+model = load_model("keras_Model.h5", compile=False)
